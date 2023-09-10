@@ -395,6 +395,7 @@ void LoadEffectFactories()
         ADD_EFFECT(EFFECT_MATRIX_GRID_LIGHTS,       PatternGridLights);
         ADD_EFFECT(EFFECT_MATRIX_MUNCH,             PatternMunch);
         ADD_EFFECT(EFFECT_MATRIX_MAZE,              PatternMaze);
+        ADD_EFFECT(EFFECT_MATRIX_TILEABLE,          PatternTileableManager);
 
         // make_shared_psram<PatternInfinity>(),
         // make_shared_psram<PatternQR>(),

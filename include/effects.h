@@ -107,6 +107,7 @@
 #define EFFECT_MATRIX_GHOST_WAVE                       134
 #define EFFECT_MATRIX_MAZE                             135
 #define EFFECT_MATRIX_SPECTRUMBAR                      136
+#define EFFECT_MATRIX_TILEABLE                         137
 
 // Hexagon Effects
 #define EFFECT_HEXAGON_OUTER_RING                      201

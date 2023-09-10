@@ -81,6 +81,7 @@
     #include "effects/matrix/PatternNoiseSmearing.h"
     #include "effects/matrix/PatternQR.h"
     #include "effects/matrix/PatternWeather.h"
+    #include "effects/matrix/tileable/PatternTileableManager.h"
 #endif
 
 #ifdef USE_WS281X
