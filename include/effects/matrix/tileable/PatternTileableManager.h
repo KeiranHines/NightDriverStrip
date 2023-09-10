@@ -34,15 +34,15 @@
 #define PatternTileableManager_H
 
 #include "TileableEffectWidget.h"
-#include "WidgetDependencies.h"
 #include "systemcontainer.h"
 #include "types.h"
-#include <memory>
+#include "WidgetDependencies.h"
+
 
 class PatternTileableManager : public LEDStripEffect
 {
   private:
-    std::vector<TileableEffectWidget *> layers;
+    std::vector<std::shared_ptr<TileableEffectWidget>> layers;
 
   public:
     PatternTileableManager() : LEDStripEffect(EFFECT_MATRIX_TILEABLE, "Tileable")
@@ -60,20 +60,24 @@ class PatternTileableManager : public LEDStripEffect
 
     bool RequiresDoubleBuffering() const override
     {
-        return false;
+        return true;
     }
 
     void Start() override
     {
         // TODO add ability to load config from filesystem.
-        layers.push_back(new TileablePong(0, 0, 32, 32));
-        layers.push_back(new TileablePong(32, 0, 32, 32));
-        layers.push_back(new TileableDigitalClock(20, 0));
-
+        const std::shared_ptr<TileableEffectWidget> pong = make_shared_psram<TileablePong>(0, 0, 32, 32);
+        const std::shared_ptr<TileableEffectWidget> pong2 = make_shared_psram<TileablePong>(32, 0, 32, 32);
+        layers.push_back(pong);
+        layers.push_back(pong2);
+        const std::shared_ptr<TileableEffectWidget> clock = make_shared_psram<TileableDigitalClock>(20, 0);
+        layers.push_back(clock);
+        
         for (unsigned i = 0; i < layers.size(); i++)
         {
-            layers[i]->Init(_GFX);
-            layers[i]->Start();
+            const std::shared_ptr<TileableEffectWidget> layer = layers[i];
+            layer->Init(_GFX);
+            layer->Start();
         }
     }
 
@@ -82,7 +86,8 @@ class PatternTileableManager : public LEDStripEffect
         g()->Clear();
         for (unsigned i = 0; i < layers.size(); i++)
         {
-            layers[i]->Draw();
+            const std::shared_ptr<TileableEffectWidget> layer = layers[i];
+            layer->Draw();
         }
     }
 };
