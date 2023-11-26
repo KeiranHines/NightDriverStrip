@@ -99,6 +99,7 @@ class CWebServer
     static const std::map<String, ValueValidator> settingValidators;
 
     AsyncWebServer _server;
+    AsyncWebSocket _socket;
     StaticStatistics _staticStats;
 
     // Helper functions/templates
@@ -199,14 +200,18 @@ class CWebServer
         });
     }
 
+    static void onSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg,
+                       uint8_t *data, size_t len);
+
   public:
 
     CWebServer()
-        : _server(80), _staticStats()
+        : _server(80), _socket("/ws"), _staticStats()
     {}
 
     // begin - register page load handlers and start serving pages
     void begin();
+    void EffectsUpdate();
 };
 
 // Set value in lambda using a forwarding function. Always returns true

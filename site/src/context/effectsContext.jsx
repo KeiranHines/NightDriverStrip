@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 
 const EffectsContext = createContext(undefined);
 const effectsEndpoint = `${httpPrefix !== undefined ? httpPrefix : ""}/effects`;
+const gateway = `ws://${httpPrefix !== undefined ? httpPrefix.replace('http://', '') : window.location.hostname}/ws`;
 const refreshInterval = 30000; //30 Seconds
 
 const EffectsProvider = ({ children }) => {
@@ -14,6 +15,28 @@ const EffectsProvider = ({ children }) => {
     const [activeEffect, setActiveEffect] = useState(0);
     const [effectTrigger, setEffectTrigger] = useState(false);
     const [currentEffect, setCurrentEffect] = useState(Number(0));
+    
+    useEffect(() => {
+        const ws = new WebSocket(gateway);
+        ws.onopen = () => {
+            console.log('connected to ws');
+        };
+        ws.onclose = () => {
+            console.log('connection to ws closed');
+        }
+        ws.onmessage = (event) => {
+            try {
+                console.log('Websocket message');
+                const json = JSON.parse(event.data);
+                console.log('ws data: ', json);
+            } catch(err) {
+                console.log('error proccessing ws message', err);
+                console.log('data:', event.data)
+            }
+        }
+        return () => ws.close();
+    }, [])
+    
     useEffect(() => {
         const getDataFromDevice = async (params) => {
             try {

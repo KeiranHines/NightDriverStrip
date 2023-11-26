@@ -92,12 +92,14 @@ void RemoteControl::handle()
     {
         effectManager.ClearRemoteColor();
         effectManager.NextEffect();
+        g_ptrSystem->WebServer().EffectsUpdate();
         return;
     }
     else if (IR_BMINUS == result)
     {
         effectManager.ClearRemoteColor();
         effectManager.PreviousEffect();
+        g_ptrSystem->WebServer().EffectsUpdate();
         return;
     }
     else if (IR_SMOOTH == result)

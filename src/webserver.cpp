@@ -191,7 +191,8 @@ void CWebServer::begin()
     });
 
     _server.begin();
-
+    _socket.onEvent(onSocketEvent);
+    _server.addHandler(&_socket);
     debugI("HTTP server started");
 }
 
@@ -212,31 +213,29 @@ long CWebServer::GetEffectIndexFromParam(AsyncWebServerRequest * pRequest, bool 
     return strtol(pRequest->getParam("effectIndex", post, false)->value().c_str(), NULL, 10);
 }
 
-void CWebServer::GetEffectListText(AsyncWebServerRequest * pRequest)
+std::unique_ptr<AsyncJsonResponse> buildEffectListJson()
 {
     static size_t jsonBufferSize = JSON_BUFFER_BASE_SIZE;
     bool bufferOverflow;
-    debugV("GetEffectListText");
-
     do
     {
         bufferOverflow = false;
         auto response = std::make_unique<AsyncJsonResponse>(false, jsonBufferSize);
-        auto& j = response->getRoot();
-        auto& effectManager = g_ptrSystem->EffectManager();
+        auto &j = response->getRoot();
+        auto &effectManager = g_ptrSystem->EffectManager();
 
-        j["currentEffect"]         = effectManager.GetCurrentEffectIndex();
+        j["currentEffect"] = effectManager.GetCurrentEffectIndex();
         j["millisecondsRemaining"] = effectManager.GetTimeRemainingForCurrentEffect();
-        j["eternalInterval"]       = effectManager.IsIntervalEternal();
-        j["effectInterval"]        = effectManager.GetInterval();
+        j["eternalInterval"] = effectManager.IsIntervalEternal();
+        j["effectInterval"] = effectManager.GetInterval();
 
         for (auto effect : effectManager.EffectsList())
         {
             StaticJsonDocument<256> effectDoc;
 
-            effectDoc["name"]    = effect->FriendlyName();
+            effectDoc["name"] = effect->FriendlyName();
             effectDoc["enabled"] = effect->IsEnabled();
-            effectDoc["core"]    = effect->IsCoreEffect();
+            effectDoc["core"] = effect->IsCoreEffect();
 
             if (!j["Effects"].add(effectDoc))
             {
@@ -248,9 +247,19 @@ void CWebServer::GetEffectListText(AsyncWebServerRequest * pRequest)
         }
 
         if (!bufferOverflow)
-            AddCORSHeaderAndSendResponse(pRequest, response.release());
+            return response;
 
     } while (bufferOverflow);
+    return nullptr;
+}
+
+void CWebServer::GetEffectListText(AsyncWebServerRequest * pRequest)
+{
+    debugV("GetEffectListText");
+    std::unique_ptr response = buildEffectListJson();
+    if(response) {
+        AddCORSHeaderAndSendResponse(pRequest, response.release());
+    }
 }
 
 void CWebServer::GetStatistics(AsyncWebServerRequest * pRequest)
@@ -726,5 +735,36 @@ void CWebServer::Reset(AsyncWebServerRequest * pRequest)
     {
         debugW("Resetting device at API request!");
         throw new std::runtime_error("Resetting device at API request");
+    }
+}
+
+void CWebServer::EffectsUpdate()
+{
+    JsonVariant message = buildEffectListJson().release()->getRoot();
+    size_t len = measureJson(message);
+    char buffer[len];
+    if(buffer) {
+        serializeJson(message, buffer, len);
+        _socket.textAll(buffer, len);
+    }
+}
+
+void CWebServer::onSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg,
+                               uint8_t *data, size_t len)
+{
+    switch (type)
+    {
+    case WS_EVT_CONNECT:
+        Serial.printf("WebSocket client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
+        break;
+    case WS_EVT_DISCONNECT:
+        Serial.printf("WebSocket client #%u disconnected\n", client->id());
+        break;
+    case WS_EVT_DATA:
+        // TODO Add any updates that need to fire when the web socket sends a message here.
+        break;
+    case WS_EVT_PONG:
+    case WS_EVT_ERROR:
+        break;
     }
 }
