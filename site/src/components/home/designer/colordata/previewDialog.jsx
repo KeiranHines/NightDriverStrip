@@ -77,7 +77,7 @@ const PreviewDialog = ({ open, onClose }) => {
         }
     }
 
-    return <Dialog open={open} onClose={onClose} fullWidth={true}>
+    return <Dialog open={open} onClose={onClose} fullWidth={true} maxWidth="md">
         <DialogTitle>{"Preview"}</DialogTitle>
         <DialogContent sx={{ textAlign: 'center' }}>
             <Canvas draw={draw} scale={10} width={matrixWidth * 10} height={matrixHeight * 10}></Canvas>
